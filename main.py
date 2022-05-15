@@ -1,14 +1,14 @@
 import cv2
 
 CIRCLE_RADIUS = 50
-CIRCLE_DISTANCE = 130
+CIRCLE_DISTANCE = 140
 CIRCLE_TOUCH_COLOR = (0, 0, 255)
 FINGERTIP_RADIUS = 0
 ANIMATION_LENGTH = 120
 IMG_SQUARE_SIDE = 1.4*CIRCLE_RADIUS
 
 current_menu = 'EYES'
-menus = {'EYES': {'menu_count': 4}}
+menus = {'EYES': {'menu_count': 3}}
 
 
 def drawIcon(icon, center, image):
@@ -28,7 +28,8 @@ def DrawMenu(fingerpos, img, frame):
             for i in range(3):
                 imagelink = '/Users/EvanChen/project/facial/icons/icon_' + \
                     current_menu+'_'+str(i)+'_'+'off.png'
-
+                image = cv2.circle(
+                    image, [1150, init_pos_y+i*CIRCLE_DISTANCE-90*i+frame*3*i], CIRCLE_RADIUS+5, (200, 200, 200), -1)
                 image = cv2.circle(
                     image, [1150, init_pos_y+i*CIRCLE_DISTANCE-90*i+frame*3*i], CIRCLE_RADIUS, (255, 255, 255), -1)
                 image = drawIcon(
@@ -40,6 +41,8 @@ def DrawMenu(fingerpos, img, frame):
                 if FingerTouch([1150, init_pos_y+i*CIRCLE_DISTANCE], fingerpos):
                     imagelink = '/Users/EvanChen/project/facial/icons/icon_' + \
                         current_menu+'_'+str(i)+'_'+'off.png'
+                    image = cv2.circle(
+                        image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS+5, (200, 200, 200), -1)
 
                     image = cv2.circle(
                         image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS, (255, 255, 255), -1)
@@ -48,6 +51,8 @@ def DrawMenu(fingerpos, img, frame):
                 else:
                     imagelink = '/Users/EvanChen/project/facial/icons/icon_' + \
                         current_menu+'_'+str(i)+'_'+'on.png'
+                    image = cv2.circle(
+                        image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS+5, (0, 0, 200), -1)
 
                     image = cv2.circle(
                         image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS, CIRCLE_TOUCH_COLOR, -1)
@@ -88,7 +93,7 @@ while True:
     # Q
     if k == 113:
         fy = 0
-        #current_menu = 'NOSE'
+        current_menu = 'EYES'
 
 
 cv2.destroyAllWindows()

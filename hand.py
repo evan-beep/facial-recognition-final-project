@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(min_detection_confidence=0.5,
                       min_tracking_confidence=0.5)
@@ -31,7 +31,6 @@ while True:
                     if i == 8:
                         cv2.circle(img, (xPos, yPos), 15,
                                    (128, 42, 42), cv2.FILLED)
-                        print(xPos, yPos)
 
         cv2.imshow('img', img)
 

@@ -44,7 +44,6 @@ def DrawMenu(img, frame):
 
                 if i == 8 and xPos > 0 and yPos > 0:
                     finger_pos = [xPos, yPos]
-                    print(finger_pos)
                     cv2.circle(image, (xPos, yPos), 15,
                                (128, 42, 42), cv2.FILLED)
 
@@ -95,7 +94,7 @@ def FingerTouch(circleMid, fingerpos):
         return False
 
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 fy = 0
 while True:
     # Getting out image by webcam

@@ -1,4 +1,5 @@
 import cv2
+import mediapipe as mp
 
 CIRCLE_RADIUS = 50
 CIRCLE_DISTANCE = 140
@@ -10,6 +11,14 @@ IMG_SQUARE_SIDE = 1.4*CIRCLE_RADIUS
 current_menu = 'EYES'
 menus = {'EYES': {'menu_count': 3}}
 
+# hands
+mpHands = mp.solutions.hands
+hands = mpHands.Hands(min_detection_confidence=0.5,
+                      min_tracking_confidence=0.5)
+mpDraw = mp.solutions.drawing_utils
+handLmsStyle = mpDraw.DrawingSpec(color=(255, 128, 0), thickness=6)
+handConStyle = mpDraw.DrawingSpec(color=(176, 224, 230), thickness=6)
+
 
 def drawIcon(icon, center, image):
     new_img = image.copy()
@@ -19,9 +28,25 @@ def drawIcon(icon, center, image):
     return new_img
 
 
-def DrawMenu(fingerpos, img, frame):
+def DrawMenu(img, frame):
+    finger_pos = [0, 0]
     init_pos_y = 75
     image = img.copy()
+
+    imgRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    hand_need_result = hands.process(imgRGB)
+    if hand_need_result.multi_hand_landmarks:
+        for handLms in hand_need_result.multi_hand_landmarks:
+
+            for i, lm in enumerate(handLms.landmark):
+                xPos = int(lm.x * imgWidth)
+                yPos = int(lm.y * imgHeight)
+
+                if i == 8 and xPos > 0 and yPos > 0:
+                    finger_pos = [xPos, yPos]
+                    print(finger_pos)
+                    cv2.circle(image, (xPos, yPos), 15,
+                               (128, 42, 42), cv2.FILLED)
 
     if current_menu == 'EYES':
         if(frame < 30):
@@ -38,7 +63,7 @@ def DrawMenu(fingerpos, img, frame):
         else:
             for i in range(3):
 
-                if FingerTouch([1150, init_pos_y+i*CIRCLE_DISTANCE], fingerpos):
+                if FingerTouch([1150, init_pos_y+i*CIRCLE_DISTANCE], finger_pos):
                     imagelink = '/Users/EvanChen/project/facial/icons/icon_' + \
                         current_menu+'_'+str(i)+'_'+'off.png'
                     image = cv2.circle(
@@ -74,27 +99,26 @@ cap = cv2.VideoCapture(1)
 fy = 0
 while True:
     # Getting out image by webcam
-    _, image = cap.read()
-    # Converting the image to gray scale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # Get faces into webcam's image
-    # For each detected face, find the landmark.
+    ret, image = cap.read()
 
     # Show the image
     image = cv2.flip(image, 1)
-    image = DrawMenu([1150, fy], image, fy)
-    if(fy < 1000):
-        fy += 2
+
+    imgHeight = image.shape[0]
+    imgWidth = image.shape[1]
+
+    image = DrawMenu(image, fy)
+
     cv2.imshow("Output", image)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
-
+    if(fy < 1000):
+        fy += 2
     # Q
     if k == 113:
         fy = 0
         current_menu = 'EYES'
-
 
 cv2.destroyAllWindows()
 cap.release()

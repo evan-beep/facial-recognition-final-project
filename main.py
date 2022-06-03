@@ -1,5 +1,7 @@
 import cv2
 import mediapipe as mp
+from imutils import face_utils
+import dlib
 
 CIRCLE_RADIUS = 50
 CIRCLE_DISTANCE = 140
@@ -7,9 +9,14 @@ CIRCLE_TOUCH_COLOR = (0, 0, 255)
 FINGERTIP_RADIUS = 0
 ANIMATION_LENGTH = 120
 IMG_SQUARE_SIDE = 1.4*CIRCLE_RADIUS
+PROJECT_FOLDER = '/Users/EvanChen/project/'
 
 current_menu = 'EYES'
 menus = {'EYES': {'menu_count': 3}}
+
+p = "shape_predictor_68_face_landmarks.dat"
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor(p)
 
 # hands
 mpHands = mp.solutions.hands
@@ -18,6 +25,8 @@ hands = mpHands.Hands(min_detection_confidence=0.5,
 mpDraw = mp.solutions.drawing_utils
 handLmsStyle = mpDraw.DrawingSpec(color=(255, 128, 0), thickness=6)
 handConStyle = mpDraw.DrawingSpec(color=(176, 224, 230), thickness=6)
+
+LANDMARKS = {}
 
 
 def addfilter(image, x_offset, y_offset, imgurl):
@@ -49,9 +58,24 @@ def addfilter(image, x_offset, y_offset, imgurl):
 def drawIcon(icon, center, image):
     new_img = image.copy()
     icon = cv2.imread(icon)
+
     new_img[center[1]-35:center[1]-35+70,
-            center[0]-35:center[0]-35+70] = icon
+            center[0]-35:center[0]+35] = icon
     return new_img
+
+
+def DrawFace(img):
+    img = img
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    rects = detector(gray, 0)
+    print(len(rects))
+    for rect in rects:
+        shape = predictor(gray, rect)
+        shape = face_utils.shape_to_np(shape)
+        for n, (x, y) in enumerate(shape):
+            img = cv2.circle(img, (x, y), 2, (0, 255, 0), -1)
+            LANDMARKS[n+1] = (x, y)
+    return img
 
 
 def DrawMenu(img, frame):
@@ -76,7 +100,7 @@ def DrawMenu(img, frame):
     if current_menu == 'EYES':
         if(frame < 30):
             for i in range(3):
-                imagelink = '/Users/chenjianxin/facial/icons/icon_' + \
+                imagelink = PROJECT_FOLDER + 'facial/icons/icon_' + \
                     current_menu+'_'+str(i)+'_'+'off.png'
                 image = cv2.circle(
                     image, [1150, init_pos_y+i*CIRCLE_DISTANCE-90*i+frame*3*i], CIRCLE_RADIUS+5, (200, 200, 200), -1)
@@ -89,7 +113,7 @@ def DrawMenu(img, frame):
             for i in range(3):
 
                 if FingerTouch([1150, init_pos_y+i*CIRCLE_DISTANCE], finger_pos):
-                    imagelink = '/Users/chenjianxin/facial/icons/icon_' + \
+                    imagelink = PROJECT_FOLDER + 'facial/icons/icon_' + \
                         current_menu+'_'+str(i)+'_'+'off.png'
                     image = cv2.circle(
                         image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS+5, (200, 200, 200), -1)
@@ -99,7 +123,7 @@ def DrawMenu(img, frame):
                     image = drawIcon(
                         imagelink, [1150, init_pos_y+i*CIRCLE_DISTANCE], image)
                 else:
-                    imagelink = '/Users/chenjianxin/facial/icons/icon_' + \
+                    imagelink = PROJECT_FOLDER + 'facial/icons/icon_' + \
                         current_menu+'_'+str(i)+'_'+'on.png'
                     image = cv2.circle(
                         image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS+5, (0, 0, 200), -1)
@@ -120,21 +144,24 @@ def FingerTouch(circleMid, fingerpos):
         return False
 
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 fy = 0
 while True:
-    # Getting out image by webcam
     ret, image = cap.read()
+    if not ret:
+        break
 
-    # Show the image
     image = cv2.flip(image, 1)
 
     imgHeight = image.shape[0]
     imgWidth = image.shape[1]
+    DrawFace(image)
+
+    # Code放這下面，上面別動
 
     image = DrawMenu(image, fy)
-    image = addfilter(
-        image, 0, 0, "/Users/chenjianxin/facial/glass/glass2.jpg")
+    # image = addfilter(
+    #    image, 0, 0, "/Users/EvanChen/project/facial/glass/glass2.jpg")
     cv2.imshow("Output", image)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:

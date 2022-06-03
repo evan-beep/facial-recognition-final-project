@@ -20,6 +20,32 @@ handLmsStyle = mpDraw.DrawingSpec(color=(255, 128, 0), thickness=6)
 handConStyle = mpDraw.DrawingSpec(color=(176, 224, 230), thickness=6)
 
 
+def addfilter(image, x_offset, y_offset, imgurl):
+    # Get faces into webcam's image
+    # For each detected face, find the landmark.
+
+    # Show the image
+    filter_image = cv2.imread(
+        imgurl, cv2.IMREAD_COLOR)
+    filter_image_resized = filter_image  # cv2.resize(filter_image, (200, 700))
+    x_end = x_offset + filter_image_resized.shape[1]
+    y_end = y_offset + filter_image_resized.shape[0]
+    roi = image[y_offset:y_end, x_offset:x_end]
+
+    #image[y_offset:y_end, x_offset:x_end] = bg
+    filter_image_gray = cv2.cvtColor(
+        filter_image_resized, cv2.COLOR_RGB2GRAY)
+    ret, mask = cv2.threshold(
+        filter_image_gray, 120, 255, cv2.THRESH_BINARY)
+    bg = cv2.bitwise_or(roi, roi, mask=mask)
+    mask_inv = cv2.bitwise_not(filter_image_gray)
+    fg = cv2.bitwise_and(
+        filter_image_resized, filter_image_resized, mask=mask_inv)
+    final_roi = cv2.add(bg, fg)
+    image[y_offset:y_end, x_offset:x_end] = final_roi
+    return image
+
+
 def drawIcon(icon, center, image):
     new_img = image.copy()
     icon = cv2.imread(icon)
@@ -50,7 +76,7 @@ def DrawMenu(img, frame):
     if current_menu == 'EYES':
         if(frame < 30):
             for i in range(3):
-                imagelink = '/Users/EvanChen/project/facial/icons/icon_' + \
+                imagelink = '/Users/chenjianxin/facial/icons/icon_' + \
                     current_menu+'_'+str(i)+'_'+'off.png'
                 image = cv2.circle(
                     image, [1150, init_pos_y+i*CIRCLE_DISTANCE-90*i+frame*3*i], CIRCLE_RADIUS+5, (200, 200, 200), -1)
@@ -63,7 +89,7 @@ def DrawMenu(img, frame):
             for i in range(3):
 
                 if FingerTouch([1150, init_pos_y+i*CIRCLE_DISTANCE], finger_pos):
-                    imagelink = '/Users/EvanChen/project/facial/icons/icon_' + \
+                    imagelink = '/Users/chenjianxin/facial/icons/icon_' + \
                         current_menu+'_'+str(i)+'_'+'off.png'
                     image = cv2.circle(
                         image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS+5, (200, 200, 200), -1)
@@ -73,7 +99,7 @@ def DrawMenu(img, frame):
                     image = drawIcon(
                         imagelink, [1150, init_pos_y+i*CIRCLE_DISTANCE], image)
                 else:
-                    imagelink = '/Users/EvanChen/project/facial/icons/icon_' + \
+                    imagelink = '/Users/chenjianxin/facial/icons/icon_' + \
                         current_menu+'_'+str(i)+'_'+'on.png'
                     image = cv2.circle(
                         image, [1150, init_pos_y+i*CIRCLE_DISTANCE], CIRCLE_RADIUS+5, (0, 0, 200), -1)
@@ -107,7 +133,8 @@ while True:
     imgWidth = image.shape[1]
 
     image = DrawMenu(image, fy)
-
+    image = addfilter(
+        image, 0, 0, "/Users/chenjianxin/facial/glass/glass2.jpg")
     cv2.imshow("Output", image)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
